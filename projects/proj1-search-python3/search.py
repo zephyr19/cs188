@@ -72,6 +72,26 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+
+def search(problem, fn):
+    """Return the solution of the given problem
+    fn -- compute priority
+    """
+    start = problem.getStartState()
+    closed = set()  # keep track of visited state
+    fringe = util.PriorityQueueWithFunction(fn)
+    fringe.push((start, [], 0))  # fringe node: state & path & total_cost
+    while not fringe.isEmpty():
+        state, solution, total_cost = fringe.pop()
+        if problem.isGoalState(state):
+            return solution
+        if state not in closed:  # only explorer the unvisited state
+            closed.add(state)
+            for successor in problem.getSuccessors(state):
+                new_state, action, cost, = successor
+                fringe.push((new_state, solution[:] + [action], total_cost+cost))  # add new node to the fringe
+    raise Exception("No solution of the search problem!")
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -86,18 +106,15 @@ def depthFirstSearch(problem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return search(problem, lambda node: -node[2])
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return search(problem, lambda node: node[2])
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return search(problem, lambda node: node[2])
 
 def nullHeuristic(state, problem=None):
     """
@@ -108,8 +125,7 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return search(problem, lambda node: node[2]+heuristic(node[0], problem))
 
 
 # Abbreviations

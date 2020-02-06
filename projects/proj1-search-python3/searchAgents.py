@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -287,22 +287,24 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         # Please add any code here which you would like to use
         # in initializing the problem
-        "*** YOUR CODE HERE ***"
 
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.startingPosition, (False, False, False, False)
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        position, visited = state
+        new_visited = list(visited)
+        # if the position is corner, then update visited
+        if position in self.corners:
+            new_visited[self.corners.index(position)] = True
+        return all(new_visited)  # check if all visited booleans are True
 
     def getSuccessors(self, state):
         """
@@ -314,17 +316,23 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
+        position, visited = state
+        x, y = position
+        new_visited = list(visited)
+        # if the position is corner, then update visited
+        if position in self.corners:
+            new_visited[self.corners.index(position)] = True
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
-
-            "*** YOUR CODE HERE ***"
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            hitsWall = self.walls[nextx][nexty]
+            if not hitsWall:
+                new_position = (nextx, nexty)
+                state = (new_position, tuple(new_visited))
+                successors.append((state, action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -358,9 +366,12 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    position, visited = state
+    distance, fn = [0], util.manhattanDistance
+    for i, corner in enumerate(corners):
+        if not visited[i]:
+            distance.append(fn(position, corner))
+    return max(distance)
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -452,9 +463,105 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
+    # return 0
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+
+    # v3 nodes expanded: 7841
+    x, y = position
+    initial_info = (position, 0)
+    info = [initial_info] * 4
+    def partition(food):
+        dx, dy = food
+        if dx - x > 0:
+            return 0 if dy - y > 0 else 1
+        else:
+            return 3 if dy - y > 0 else 2
+    fn = util.manhattanDistance
+    for food in foodGrid.asList():
+        distance = fn(position, food)
+        index = partition(food)
+        _, cost = info[index]
+        if distance > cost:
+            info[index] = (food, distance)
+
+    # v1
+    # def compute_v3_cost():
+    #     costs = []
+    #     for i, item in enumerate(info):
+    #         pos, _ = item
+    #         if i == 0:
+    #             costs.append(fn(info[3][0], pos))
+    #         else:
+    #             costs.append(fn(info[i-1][0], pos))
+    #     costs.remove(max(costs))
+    #     return sum(costs)
+
+    # v2
+    def compute_v3_cost():
+        # very ugly implementation
+        costs = []
+        states = [item[0] for item in info]
+        s1, s2, s3, s4 = states
+        costs.append(sum([fn(position, s1), fn(s1, s2), fn(s2, s3), fn(s3, s4)]))
+        costs.append(sum([fn(position, s1), fn(s1, s2), fn(s2, s4), fn(s4, s3)]))
+        costs.append(sum([fn(position, s1), fn(s1, s3), fn(s3, s2), fn(s2, s4)]))
+        costs.append(sum([fn(position, s1), fn(s1, s3), fn(s3, s4), fn(s2, s4)]))
+        costs.append(sum([fn(position, s1), fn(s1, s4), fn(s4, s2), fn(s2, s3)]))
+        costs.append(sum([fn(position, s1), fn(s1, s4), fn(s4, s3), fn(s2, s3)]))
+
+        costs.append(sum([fn(position, s2), fn(s2, s1), fn(s1, s3), fn(s3, s4)]))
+        costs.append(sum([fn(position, s2), fn(s2, s1), fn(s1, s4), fn(s4, s3)]))
+        costs.append(sum([fn(position, s2), fn(s2, s3), fn(s3, s1), fn(s1, s4)]))
+        costs.append(sum([fn(position, s2), fn(s2, s3), fn(s3, s4), fn(s1, s4)]))
+        costs.append(sum([fn(position, s2), fn(s2, s4), fn(s4, s1), fn(s1, s3)]))
+        costs.append(sum([fn(position, s2), fn(s2, s4), fn(s4, s3), fn(s1, s3)]))
+
+        costs.append(sum([fn(position, s3), fn(s3, s1), fn(s1, s2), fn(s2, s4)]))
+        costs.append(sum([fn(position, s3), fn(s3, s1), fn(s1, s4), fn(s4, s2)]))
+        costs.append(sum([fn(position, s3), fn(s3, s2), fn(s2, s1), fn(s1, s4)]))
+        costs.append(sum([fn(position, s3), fn(s3, s2), fn(s2, s4), fn(s1, s4)]))
+        costs.append(sum([fn(position, s3), fn(s3, s4), fn(s4, s1), fn(s1, s2)]))
+        costs.append(sum([fn(position, s3), fn(s3, s4), fn(s4, s2), fn(s1, s2)]))
+
+        costs.append(sum([fn(position, s4), fn(s4, s1), fn(s1, s2), fn(s2, s3)]))
+        costs.append(sum([fn(position, s4), fn(s4, s1), fn(s1, s3), fn(s3, s2)]))
+        costs.append(sum([fn(position, s4), fn(s4, s2), fn(s2, s1), fn(s1, s3)]))
+        costs.append(sum([fn(position, s4), fn(s4, s2), fn(s2, s3), fn(s1, s3)]))
+        costs.append(sum([fn(position, s4), fn(s4, s3), fn(s3, s1), fn(s1, s2)]))
+        costs.append(sum([fn(position, s4), fn(s4, s3), fn(s3, s2), fn(s1, s2)]))
+
+        return min(costs)
+    return compute_v3_cost()
+
+    # # v2 -- nodes expanded: 8328
+    # x, y = position
+    #
+    # def is_left(food):
+    #     dx, dy = food
+    #     return (dx - x) > 0
+    # fn, distances = util.manhattanDistance, {0}
+    # left_food, right_food = position, position
+    # left_most, right_most = 0, 0
+    # for food in foodGrid.asList():
+    #     distance = fn(position, food)
+    #     distances.add(distance)
+    #     if is_left(food):
+    #         if distance > left_most:
+    #             left_most, left_food = distance, food
+    #     else:
+    #         if distance > right_most:
+    #             right_most, right_food = distance, food
+    # v1_cost = max(distances)
+    # v2_cost = min(left_most, right_most) + abs(left_food[0] - right_food[0])
+    # return max(v1_cost, v2_cost)
+
+    # # v1 -- nodes expanded: 9551
+    # fn, distances = util.manhattanDistance, [0]
+    # for food in foodGrid.asList():
+    #     distances.append(fn(position, food))
+    # return max(distances)
+
+
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -484,8 +591,7 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.uniformCostSearch(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -519,9 +625,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         complete the problem definition.
         """
         x,y = state
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
 
 def mazeDistance(point1, point2, gameState):
     """
