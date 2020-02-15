@@ -3,7 +3,7 @@
 #### Search Problem
 
 - A state space
-- A successor function (with actions, costs)
+- A successor function (return state, action, cost)
 - A start state and a goal test
 
 
@@ -53,5 +53,86 @@
 
 
 
+### CSP (Constraint Satisfaction Problem)
+
+**What is CSP?** (map coloring, n-queen)
+
+- Compared to the **Planning**: sequences of action
+  - the important thing is the path to the goal
+  - paths have various depth, costs
+- CSP is **Identification**: assignments to valuables
+  - the goal itself is important, not the path
+  - the goal are in the same depth (So, the algorithms are based on the DFS)
+
+**How to represent a CSP?** (represent smaller, problem easier)
+
+- **Variables**
+- **Domains**
+- **Constraints**
+  - either be **implicit**: rules can be write in a function to check if violate constraints
+  - or **explicit**: some sets of assignments that won't violate constraints
+  - Unary constraints, Binary constraints, and so on: (n variables)
+- **Solutions**: with all variables being assigned and satisfying all constrains
+
+**Algorithm:**
+
+- **Backtracking**: basic
+
+- **Ordering:**
+
+  - **Minimum Remaining Values**: when selecting variable to assign, choose the hardest one to **fail faster** (cuz u eventually need to assign it)   Choose the variable with minimum remaining value
+  - **Least Constraining Value**: when selecting values in domain, choose the easiest one for avoid failure, for code: compute total costs after enforce arc-consistency and choose the smallest cost one.
+
+- **Filtering:** keep tracking of unsigned variables and cross off bad options
+
+  | type                       | enable                              | weakness                  |      |
+  | -------------------------- | ----------------------------------- | ------------------------- | ---- |
+  | forward checking           | see failure one step ahead          | can't see further         |      |
+  | arc-consistency (n^2^b^3^) | can detect failure many steps ahead | can't detect all failures |      |
+
+  - detect inevitable failure early
+  - turn some unnecessary non-polynomial time to **polynomial time**
+
+- **Structure:**
+
+  - **Tree-Structured:** (no loops)
+    - Remove backward
+    - Assign  forward
+    - Runtime: O(n d^2^)
+  - **Nearly Tree-Structured:** Cut some important nodes
+    - Runtime: O(d^c^ (n-c) d^2^) very fast for small c
+
+- **Iterative min-conflicts:** randomly assignment with min-conflicts iterative improving. sometimes can be fast, but most time, won't
 
 
+
+#### Backtracking Search Pseudo-Code
+
+![image-20200208220449213](backtracking-search.png)
+
+
+
+#### Arc Consistency Pseudo-Code
+
+![image-20200208210031623](arc-consistency.png)
+
+
+
+#### Local Search
+
+**Compare:**
+
+- Tree Search keeps unexplored alternatives on the fringe (ensures completeness)
+- Local Search: improve a single option until you can't make it better (no fringe)
+- Much faster and more memory efficient, but incomplete and suboptimal.
+
+**Algorithm:** 
+
+- **Simulated Annealing**: Escape local maxima by allowing downhill moves, but make them rarer as time goes on
+- **Genetic Algorithm**
+
+
+
+#### Simulated Annealing Pseudo-Code
+
+![image-20200208225115232](Simulated%20Anealing.png)
