@@ -136,3 +136,27 @@
 #### Simulated Annealing Pseudo-Code
 
 ![image-20200208225115232](Simulated%20Anealing.png)
+
+
+
+### Adversarial Search (Minimax)
+
+#### Minimax(dispatch) Pseudo-Code
+
+![image-20200220160534550](image-20200220160534550.png)
+
+without pruning, the behavior would like DFS:  run time: O(b^m^),  space: O(bm)
+
+#### Alpha-Beta Pseudo-Code
+
+![image-20200220161110962](image-20200220161110962.png)
+
+with limited source when you can't see the end of the game, you need to write a good evaluate function to guide agent to win.
+
+
+
+Minimax will see future very pessimistic, leads to low score even if you can get higher when opponent's strategy isn't that good. So expectimax may performance better.
+
+#### Expectimax Pseudo-Code
+
+![image-20200220164346728](image-20200220164346728.png)
